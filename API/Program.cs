@@ -1,0 +1,34 @@
+using Microsoft.EntityFrameworkCore;
+using Persistence;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+
+builder.Services.AddControllers();
+
+builder.Services.AddDbContext<AppDbContext>(opt => {
+    opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+
+app.MapControllers();
+
+using var scope = app.Services.CreateScope(); //creating a service scope, make sure stuff gets disposed when we are finished with it 
+var services = scope.ServiceProvider;
+try
+{
+  
+  var context = services.GetRequiredService<AppDbContext>();
+  await context.Database.MigrateAsync(); //any pending migrations will be applied, note: migrations: adding, creating properties...
+  await DbInitializer.SeedData(context);
+}
+catch(Exception ex)
+{
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "an error occured during migration");
+  throw;   
+}
+app.Run();
