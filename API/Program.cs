@@ -10,10 +10,14 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(opt => {
     opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+
+
+builder.Services.AddCors(); //we added the service Cors, and bc of that we need to add middleware
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-
+app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000","https://localhost:3000")); //x refers to options
 app.MapControllers();
 
 using var scope = app.Services.CreateScope(); //creating a service scope, make sure stuff gets disposed when we are finished with it 
